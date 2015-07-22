@@ -37,13 +37,18 @@ static int viewTag = 101;
 // 设置一个用来判断是否有钩的那张图片
 @property (nonatomic, strong) NSMutableArray *iconArray;
 
+// 设置一个判断编辑状态的一个状态值
+@property (nonatomic, assign) int editingTag;
+
 @end
 
 @implementation ViewController
-
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
+    self.view.backgroundColor = [UIColor whiteColor];
+    
+    _editingTag = 0;
     
     self.title = @"通知";
     
@@ -88,6 +93,7 @@ static int viewTag = 101;
 {
     if ([button.titleLabel.text isEqual:@"编辑"]) {
         
+        _editingTag = 1;
         [button setTitle:@"取消" forState:UIControlStateNormal];
         [self setAnimationEditing];
         [self.notificationTableView setEditing:YES animated:YES];
@@ -113,7 +119,7 @@ static int viewTag = 101;
         self.notificationTableView.frame = notifiFrame;
         
         CGRect bottomFrame = self.bottomView.frame;
-        bottomFrame.origin.y -= 44;
+        bottomFrame.origin.y = [UIScreen mainScreen].bounds.size.height - 44 + 20;
         self.bottomView.frame = bottomFrame;
         
     }];
@@ -133,7 +139,7 @@ static int viewTag = 101;
         self.notificationTableView.frame = notifiFrame;
         
         CGRect bottomFrame = self.bottomView.frame;
-        bottomFrame.origin.y += 44;
+        bottomFrame.origin.y = [UIScreen mainScreen].bounds.size.height  + 20;
         self.bottomView.frame = bottomFrame;
         
     }];
@@ -223,6 +229,7 @@ static int viewTag = 101;
             
         }];
         
+        [self.notificationTableView reloadData];
         
     }
     
@@ -232,11 +239,12 @@ static int viewTag = 101;
 #pragma mark - 懒加载
 - (UIView *)bottomView
 {
+    
     if (_bottomView == nil) {
         
         _bottomView = [[UIView alloc] init];
         _bottomView.backgroundColor = UIColorFromRGB(0xf1f3f4);
-        _bottomView.frame = CGRectMake(0, [UIScreen mainScreen].bounds.size.height,[UIScreen mainScreen].bounds.size.width, 44);
+        _bottomView.frame = CGRectMake(0, [UIScreen mainScreen].bounds.size.height + 20,[UIScreen mainScreen].bounds.size.width , 44);
         
         // 全选按钮
         UIButton *allButton = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -259,6 +267,7 @@ static int viewTag = 101;
     }
     
     return _bottomView;
+    
     
     
 }
@@ -379,12 +388,22 @@ static int viewTag = 101;
 
 - (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if ([_editionButton.titleLabel.text isEqual:@"取消"]) {
+    
+    if (_editingTag == 1 && [_editionButton.titleLabel.text isEqual:@"编辑"] && [[[UIDevice currentDevice] systemVersion] hasPrefix:@"7"]) {
         
         return UITableViewCellEditingStyleDelete | UITableViewCellEditingStyleInsert;
     }
     
-    return UITableViewCellEditingStyleDelete;
+    _editingTag = 0;
+    
+    if ([_editionButton.titleLabel.text isEqual:@"取消"]) {
+        
+        return UITableViewCellEditingStyleDelete | UITableViewCellEditingStyleInsert;
+        
+    }
+    
+    return UITableViewCellEditingStyleDelete ;
+    
     
 }
 
@@ -456,9 +475,9 @@ static int viewTag = 101;
 // 让tableview和uiviewcontroller变成可编辑状态
 - (void)setEditing:(BOOL)editing animated:(BOOL)animated
 {
-    [super setEditing:editing animated:YES];
-    [_notificationTableView setEditing:editing animated:animated];
+    [super setEditing:editing animated:animated];
     
+    // [_notificationTableView setEditing:editing animated:animated];
     
 }
 
@@ -487,6 +506,7 @@ static int viewTag = 101;
         [_notificationTableView deleteRowsAtIndexPaths:indexPaths withRowAnimation:UITableViewRowAnimationLeft];
     }
 }
+
 
 
 - (void)didReceiveMemoryWarning {
